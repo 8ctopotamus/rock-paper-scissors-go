@@ -12,6 +12,7 @@ import (
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	reader := bufio.NewReader(os.Stdin)
+	computerChoices := [3]string{"r", "p", "s"}
 	wins := 0
 	losses := 0
 	ties := 0
@@ -20,7 +21,6 @@ func main() {
 	fmt.Println("--------------------------")
 	for {
 		fmt.Print("-> ")
-		computerChoices := [3]string{"r", "p", "s"}
 		userChoice, _ := reader.ReadString('\n')
 		// trimmed := strings.Replace(userChoice, "\n", "", -1) // doesn't work on Windows
 		userChoice = strings.Replace(userChoice, "\r\n", "", -1)
