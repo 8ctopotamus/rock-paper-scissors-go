@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -9,40 +10,97 @@ import (
 	"time"
 )
 
+var reader = bufio.NewReader(os.Stdin)
+
+var GameChoices = [3]string{"r", "p", "s"}
+
+var GameChoiceNameMap = map[string]string{
+	"r": "Rock",
+	"s": "Scissors",
+	"p": "Paper",
+}
+
+var GameWinRules = map[string]string {
+	"r": "s",
+	"p": "r",
+	"s": "p",
+}
+
+var wins, losses, ties int
+
 func main() {
-	rand.Seed(time.Now().UnixNano())
-	reader := bufio.NewReader(os.Stdin)
-	computerChoices := [3]string{"r", "p", "s"}
-	wins := 0
-	losses := 0
-	ties := 0
-	fmt.Println("Rock-Paper-Scissors - GO!")
-	fmt.Println("Type r, p, or s to play...")
-	fmt.Println("--------------------------")
+	// Initialize game.
+	initGame()
+
 	for {
-		fmt.Print("-> ")
-		userChoice, _ := reader.ReadString('\n')
-		// trimmed := strings.Replace(userChoice, "\n", "", -1) // doesn't work on Windows
-		userChoice = strings.Replace(userChoice, "\r\n", "", -1)
-		userChoice = strings.ToLower(userChoice)
-		fmt.Println("You played: ", userChoice)
-		if userChoice == "r" || userChoice == "p" || userChoice == "s" {
-			computerChoice := computerChoices[(rand.Intn(3-0) + 0)]
-			fmt.Println("Computer played: ", computerChoice)
-			fmt.Println("-------------")
-			if (userChoice == "r" && computerChoice == "s") || (userChoice == "p" && computerChoice == "r") || (userChoice == "s" && computerChoice == "p") {
-				wins++
-				fmt.Println("You won!")
-			} else if userChoice == computerChoice {
-				ties++
-				fmt.Println("It's a tie!")
-			} else {
-				losses++
-				fmt.Println("You LOSE")
-			}
-			fmt.Printf("Wins: %6d | Losses: %6d | Ties: %6d \n", wins, losses, ties)
-		} else {
-			fmt.Println("No go. You need to type r, p, or s.")
+		// Get User's Choice
+		userChoice, err := readInUserChoice()
+		if err != nil {
+			logError(err)
+			continue
 		}
+
+		// Get Computer's choice.
+		computerChoice := generateComputerChoice()
+
+		// Determine Winner.
+		if userChoice == computerChoice {
+			ties++
+			fmt.Println("It's a tie!")
+		} else if GameWinRules[userChoice] == computerChoice {
+			wins++
+			fmt.Println("You won!")
+		} else {
+			losses++
+			fmt.Println("You LOSE")
+		}
+
+		logStandings()
 	}
+}
+
+func initGame() {
+	rand.Seed(time.Now().UnixNano())
+	wins = 0
+	losses = 0
+	ties = 0
+	logGameIntroduction()
+}
+
+func readInUserChoice() (string, error) {
+	fmt.Print("-> ")
+	choice, _ := reader.ReadString('\n')
+	choice = strings.TrimSpace(choice)
+	choice = strings.ToLower(choice)
+	fmt.Println("You played: ", GameChoiceNameMap[choice])
+
+	if !validateInput(choice) {
+		return "", errors.New("no go. You need to type 'r', 'p', or 's'")
+	}
+	return choice, nil
+}
+
+func generateComputerChoice() string {
+	choice := GameChoices[(rand.Intn(3-0) + 0)]
+	fmt.Println("Computer played: ", GameChoiceNameMap[choice])
+	fmt.Println("----------------")
+	return choice
+}
+
+func logGameIntroduction() {
+	fmt.Println("Rock-Paper-Scissors - GO!")
+	fmt.Println("Type 'r', 'p', or 's' to play...")
+	fmt.Println("--------------------------------")
+}
+
+func logError(err error) {
+	fmt.Println("ERROR: ", err)
+}
+
+func validateInput(choice string) bool {
+	return choice == "r" || choice == "p" || choice == "s"
+}
+
+func logStandings() {
+	fmt.Printf("Wins: %6d | Losses: %6d | Ties: %6d \n", wins, losses, ties)
 }
